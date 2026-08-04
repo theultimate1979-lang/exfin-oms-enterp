@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Test Collection for Connection Verification ---
+    match /test/{document=**} {
+      allow read, write: if true;
+    }
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        getUserData().role == 'Super Admin';
+    }
+
+    function isHRAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        getUserData().role == 'HR Admin';
+    }
+
+    function isManager() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        getUserData().role == 'Manager';
+    }
+
+    function isAdminOrHR() {
+      return isSuperAdmin() || isHRAdmin();
+    }
+
+    function isPrivilegedUser() {
+      return isSuperAdmin() || isHRAdmin() || isManager();
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getEmployeeData(userId) {
+      return get(/databases/$(database)/documents/employees/$(userId)).data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Users Collection ---
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isPrivilegedUser());
+      allow create, update, delete: if isSuperAdmin() || isHRAdmin();
+    }
+
+    // --- Employees Collection ---
+    match /employees/{employeeId} {
+      allow read: if isAuthenticated() && (
+        isOwner(employeeId) || 
+        isSuperAdmin() || 
+        isHRAdmin() || 
+        (isManager() && exists(/databases/$(database)/documents/employees/$(request.auth.uid)) && getEmployeeData(request.auth.uid).department == resource.data.department)
+      );
+      allow create: if isAdminOrHR();
+      allow update: if isOwner(employeeId) || isAdminOrHR();
+      allow delete: if isSuperAdmin();
+    }
+
+    // --- Attendance Collection ---
+    match /attendance/{attendanceId} {
+      allow read: if isAuthenticated() && (
+        resource == null || 
+        resource.data.userId == request.auth.uid || 
+        isSuperAdmin() || 
+        isHRAdmin() || 
+        (isManager() && exists(/databases/$(database)/documents/employees/$(request.auth.uid)) && getEmployeeData(request.auth.uid).department == getEmployeeData(resource.data.userId).department)
+      );
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdminOrHR());
+      allow update: if isAuthenticated() && (
+        (resource != null && resource.data.userId == request.auth.uid) || isAdminOrHR()
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // --- Leave Applications Collection ---
+    match /leaveApplications/{leaveId} {
+      allow read: if isAuthenticated() && (
+        resource == null || 
+        resource.data.userId == request.auth.uid || 
+        isSuperAdmin() || 
+        isHRAdmin() || 
+        (isManager() && exists(/databases/$(database)/documents/employees/$(request.auth.uid)) && getEmployeeData(request.auth.uid).department == getEmployeeData(resource.data.userId).department)
+      );
+      allow create: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || isAdminOrHR());
+      allow update: if isAuthenticated() && (
+        (resource != null && resource.data.userId == request.auth.uid && resource.data.status == 'Pending') || 
+        isPrivilegedUser()
+      );
+      allow delete: if isSuperAdmin() || isHRAdmin();
+    }
+
+    // --- Leave Quotas Collection ---
+    match /leaveQuota/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isPrivilegedUser());
+      allow create, update: if isAdminOrHR();
+      allow delete: if isSuperAdmin();
+    }
+
+    // --- Holidays Collection ---
+    match /holidays/{holidayId} {
+      allow read: if true;
+      allow create, update, delete: if isAdminOrHR();
+    }
+
+    // --- Departments Collection ---
+    match /departments/{departmentId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdminOrHR();
+    }
+
+    // --- Notifications Collection ---
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || resource.data.userId == 'ALL' || isPrivilegedUser());
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource != null && (resource.data.userId == request.auth.uid || isPrivilegedUser()));
+      allow delete: if isSuperAdmin() || isHRAdmin();
+    }
+
+    // --- Settings Collection ---
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isSuperAdmin() || isHRAdmin();
+    }
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Enterprise application user and role mapping",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID from Firebase Auth" },
+        "email": { "type": "string", "format": "email", "description": "User email address" },
+        "role": { "type": "string", "enum": ["Super Admin", "HR Admin", "Manager", "Employee"], "description": "Role-based authorization level" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "User creation date" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Employee detail profile",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Linked user document ID" },
+        "employeeId": { "type": "string", "description": "Enterprise standard employee ID (e.g. EXF-001)" },
+        "firstName": { "type": "string", "description": "Employee first name" },
+        "lastName": { "type": "string", "description": "Employee last name" },
+        "email": { "type": "string", "format": "email", "description": "Employee communication email" },
+        "department": { "type": "string", "description": "Assigned department (e.g. Finance, Engineering)" },
+        "designation": { "type": "string", "description": "Employee job title / designation" },
+        "contactNumber": { "type": "string", "description": "Contact telephone number" },
+        "joiningDate": { "type": "string", "format": "date", "description": "Enterprise start date" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"], "description": "Employee status" }
+      },
+      "required": ["userId", "employeeId", "firstName", "lastName", "email", "department", "designation", "joiningDate", "status"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily employee attendance logs",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Employee user ID" },
+        "date": { "type": "string", "format": "date", "description": "Log date (YYYY-MM-DD)" },
+        "checkIn": { "type": "string", "format": "date-time", "description": "Check-in time" },
+        "checkOut": { "type": "string", "format": "date-time", "description": "Check-out time" },
+        "workingHours": { "type": "number", "description": "Working hours calculated for the day" },
+        "status": { "type": "string", "enum": ["Present", "Late", "Absent", "Half Day"], "description": "Daily attendance marking" },
+        "late": { "type": "boolean", "description": "Indicates late entry" }
+      },
+      "required": ["userId", "date", "status"]
+    },
+    "LeaveApplication": {
+      "title": "LeaveApplication",
+      "description": "Employee leave request applications",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Requesting employee user ID" },
+        "leaveType": { "type": "string", "enum": ["Casual Leave", "Sick Leave", "Earned Leave", "Half Day"], "description": "Type of leave" },
+        "startDate": { "type": "string", "format": "date", "description": "Leave duration start date" },
+        "endDate": { "type": "string", "format": "date", "description": "Leave duration end date" },
+        "totalDays": { "type": "number", "description": "Total leave days requested" },
+        "reason": { "type": "string", "description": "Explanatory leave reason" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected"], "description": "Application approval status" },
+        "actionBy": { "type": "string", "description": "User ID of Approver/Rejecter" },
+        "actionDate": { "type": "string", "format": "date-time", "description": "Approval or rejection timestamp" },
+        "rejectionReason": { "type": "string", "description": "Optional manager notes on rejection" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["userId", "leaveType", "startDate", "endDate", "totalDays", "reason", "status", "createdAt"]
+    },
+    "LeaveQuota": {
+      "title": "LeaveQuota",
+      "description": "Assigned annual leave capacity and consumption balance",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Associated employee user ID" },
+        "casualLeave": { "type": "number", "description": "Total Casual Leave assigned" },
+        "sickLeave": { "type": "number", "description": "Total Sick Leave assigned" },
+        "earnedLeave": { "type": "number", "description": "Total Earned Leave assigned" },
+        "casualLeaveUsed": { "type": "number", "description": "Total Casual Leave consumed" },
+        "sickLeaveUsed": { "type": "number", "description": "Total Sick Leave consumed" },
+        "earnedLeaveUsed": { "type": "number", "description": "Total Earned Leave consumed" },
+        "year": { "type": "number", "description": "Active year" }
+      },
+      "required": ["userId", "casualLeave", "sickLeave", "earnedLeave", "casualLeaveUsed", "sickLeaveUsed", "earnedLeaveUsed", "year"]
+    },
+    "Holiday": {
+      "title": "Holiday",
+      "description": "Enterprise holiday listing",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date", "description": "Holiday calendar date (YYYY-MM-DD)" },
+        "name": { "type": "string", "description": "Holiday descriptive label" },
+        "type": { "type": "string", "enum": ["National", "Company", "Weekly Off"], "description": "Holiday classification" }
+      },
+      "required": ["date", "name", "type"]
+    },
+    "Department": {
+      "title": "Department",
+      "description": "Organizational department definitions",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Department name" },
+        "code": { "type": "string", "description": "Department standard code" },
+        "managerId": { "type": "string", "description": "Manager's user ID" }
+      },
+      "required": ["name", "code"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Enterprise broadcast alerts or user-specific alerts",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Recipient user ID, or 'ALL' for enterprise-wide announcements" },
+        "title": { "type": "string", "description": "Header title of the message" },
+        "message": { "type": "string", "description": "Detailed text of the notification" },
+        "type": { "type": "string", "enum": ["LeaveApproval", "AttendanceAlert", "Announcement"], "description": "Classification group" },
+        "read": { "type": "boolean", "description": "Read status toggle" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Broadcast time" }
+      },
+      "required": ["userId", "title", "message", "type", "read", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "#/entities/User",
+      "description": "Collection of system authenticated roles"
+    },
+    "employees/{employeeId}": {
+      "schema": "#/entities/Employee",
+      "description": "Collection of employee profile details"
+    },
+    "attendance/{attendanceId}": {
+      "schema": "#/entities/Attendance",
+      "description": "Daily employee attendance logs"
+    },
+    "leaveApplications/{leaveId}": {
+      "schema": "#/entities/LeaveApplication",
+      "description": "Employee leave request applications"
+    },
+    "leaveQuota/{userId}": {
+      "schema": "#/entities/LeaveQuota",
+      "description": "Assigned annual leave quotas and balances per user"
+    },
+    "holidays/{holidayId}": {
+      "schema": "#/entities/Holiday",
+      "description": "National and enterprise holidays calendar"
+    },
+    "departments/{departmentId}": {
+      "schema": "#/entities/Department",
+      "description": "Organizational company departments"
+    },
+    "notifications/{notificationId}": {
+      "schema": "#/entities/Notification",
+      "description": "System wide and individual inbox alerts"
+    }
+  }
+}

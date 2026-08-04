@@ -1,0 +1,6 @@
+{
+  "name": "EXFIN OMS Enterprise",
+  "description": "Enterprise Office Management System for employee directories, roster attendance, late flags, and real-time leave applications.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
