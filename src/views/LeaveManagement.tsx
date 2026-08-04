@@ -46,7 +46,7 @@ export const LeaveManagement: React.FC = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [leaveType, setLeaveType] = useState('Casual Leave');
+  const [leaveType, setLeaveType] = useState<'Casual Leave' | 'Sick Leave' | 'Earned Leave' | 'Half Day'>('Casual Leave');
   const [reason, setReason] = useState('');
   const [applying, setApplying] = useState(false);
 
@@ -309,7 +309,7 @@ export const LeaveManagement: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-500 uppercase">Leave Classification</label>
                 <select
                   value={leaveType}
-                  onChange={e => setLeaveType(e.target.value)}
+                  onChange={e => setLeaveType(e.target.value as 'Casual Leave' | 'Sick Leave' | 'Earned Leave' | 'Half Day')}
                   className="mt-1 block w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none"
                 >
                   <option value="Casual Leave">Casual Leave</option>
